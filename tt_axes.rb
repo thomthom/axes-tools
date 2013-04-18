@@ -19,11 +19,12 @@ module TT
   # Plugin information
   PLUGIN_ID       = 'TT_Axes_Tools'.freeze
   PLUGIN_NAME     = 'Axes Tools'.freeze
-  PLUGIN_VERSION  = '1.3.0'.freeze
+  PLUGIN_VERSION  = '1.3.2'.freeze
   
   # Resource paths
-  PATH_ROOT   = File.dirname( __FILE__ ).freeze
-  PATH        = File.join( PATH_ROOT, 'tt_axes' ).freeze
+  FILENAMESPACE = File.basename( __FILE__, '.rb' )
+  PATH_ROOT     = File.dirname( __FILE__ ).freeze
+  PATH          = File.join( PATH_ROOT, FILENAMESPACE ).freeze
   
   
   ### EXTENSION ### ------------------------------------------------------------
