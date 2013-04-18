@@ -4,50 +4,47 @@
 # thomas[at]thomthom[dot]net
 #
 #-------------------------------------------------------------------------------
-# Compatible: SketchUp 7 (PC)
-#             (other versions untested)
-#-------------------------------------------------------------------------------
-#
-# CHANGELOG
-# 1.2.0 - 29.06.2011
-#    * Renamed "Set Insertion Point" to "Set Origin"
-#
-# 1.1.0 - 06.09.2010
-#    * Requires TT_Lib2.2.0
-#    * Replaced old menus with new Set Insertion Point
-#
-# 1.0.0 - 30.08.2010
-#    * Initial release.
-#
-#-------------------------------------------------------------------------------
 
 require 'sketchup.rb'
-require 'TT_Lib2/core.rb'
+require 'langhandler.rb'
+begin
+  require 'TT_Lib2/core.rb'
+rescue LoadError => e
+  module TT
+    if @lib2_update.nil?
+      url = 'http://www.thomthom.net/software/sketchup/tt_lib2/errors/not-installed'
+      options = {
+        :dialog_title => 'TT_Lib² Not Installed',
+        :scrollable => false, :resizable => false, :left => 200, :top => 200
+      }
+      w = UI::WebDialog.new( options )
+      w.set_size( 500, 300 )
+      w.set_url( "#{url}?plugin=#{File.basename( __FILE__ )}" )
+      w.show
+      @lib2_update = w
+    end
+  end
+end
 
-TT::Lib.compatible?('2.2.0', 'TT Axes Tools')
 
 #-------------------------------------------------------------------------------
 
+if defined?( TT::Lib ) && TT::Lib.compatible?( '2.7.0', 'Axes Tools' )
+
 module TT::Plugins::AxesTools  
-  
-  ### CONSTANTS ### ------------------------------------------------------------
-  
-  VERSION = '1.2.0'.freeze
-  #VERSION = TT::Version.new(1,2,0).freeze # TT_Lib 2.6
-  
   
   ### MODULE VARIABLES ### -----------------------------------------------------
   
   # Preference
   @settings = TT::Settings.new('TT_Axes_Tools')
-  @settings[:x, 'Center']
-  @settings[:y, 'Center']
-  @settings[:z, 'Center']
+  @settings.set_default(:x, 'Center')
+  @settings.set_default(:y, 'Center')
+  @settings.set_default(:z, 'Center')
   
   
   ### MENU & TOOLBARS ### ------------------------------------------------------
   
-  unless file_loaded?( File.basename(__FILE__) )
+  unless file_loaded?( __FILE__ )
     m = TT.menu('Plugins').add_submenu('Axes Tools')
     m.add_item('Set Origin')   { self.set_origin }
   end
@@ -107,16 +104,42 @@ module TT::Plugins::AxesTools
     puts "Y: #{t.yaxis.inspect} - #{(t.yaxis == Y_AXIS).inspect} - #{(t.yaxis.samedirection?(Y_AXIS)).inspect}"
     puts "Z: #{t.zaxis.inspect} - #{(t.zaxis == Z_AXIS).inspect} - #{(t.zaxis.samedirection?(Z_AXIS)).inspect}"
   end
+
   
-  
-  def self.reload
+  # @note Debug method to reload the plugin.
+  #
+  # @example
+  #   TT::Plugins::AxesTools.reload
+  #
+  # @param [Boolean] tt_lib Reloads TT_Lib2 if +true+.
+  #
+  # @return [Integer] Number of files reloaded.
+  # @since 1.0.0
+  def self.reload( tt_lib = false )
+    original_verbose = $VERBOSE
+    $VERBOSE = nil
+    TT::Lib.reload if tt_lib
+    # Core file (this)
     load __FILE__
+    # Supporting files
+    if defined?( PATH ) && File.exist?( PATH )
+      x = Dir.glob( File.join(PATH, '*.{rb,rbs}') ).each { |file|
+        load file
+      }
+      x.length + 1
+    else
+      1
+    end
+  ensure
+    $VERBOSE = original_verbose
   end
   
 end # module
 
+end # if TT_Lib
+
 #-------------------------------------------------------------------------------
 
-file_loaded( File.basename(__FILE__) )
+file_loaded( __FILE__ )
 
 #-------------------------------------------------------------------------------
