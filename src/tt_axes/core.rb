@@ -37,17 +37,36 @@ module TT::Plugins::AxesTools
 
 
   unless file_loaded?(__FILE__)
-    m = TT.menu('Plugins').add_submenu(PLUGIN_NAME)
-    m.add_item('Set Origin')   { self.set_origin }
+    menu = TT.menu('Plugins').add_submenu(PLUGIN_NAME)
+    menu.add_item('Set Origin for Selected')   { self.set_origin_for_selected }
+    menu.add_item('Set Origin for All Components and Groups')   { self.set_origin_for_all }
   end
 
-
-  def self.set_origin
+  def self.set_origin_for_selected
     model = Sketchup.active_model
 
-    # Prompt user for input
+    definitions = []
+    model.selection.each { |e|
+      definitions << TT::Instance.definition(e) if TT::Instance.is?(e)
+    }
+    definitions.uniq!
+
+    self.set_origin(model, definitions)
+  end
+
+  def self.set_origin_for_all
+    model = Sketchup.active_model
+
+    definitions = model.definitions.reject { |d| d.image? }
+
+    self.set_origin(model, definitions)
+  end
+
+  # @param [Sketchup::Model] model
+  # @param [Array<Sketchup::ComponentDefinition>] definitions
+  def self.set_origin(model, definitions)
     prompts = ['X (Red): ', 'Y (Green): ', 'Z (Blue): ']
-    defaults = [ @settings[:x], @settings[:y], @settings[:z] ]
+    defaults = [@settings[:x], @settings[:y], @settings[:z]]
     list = ['Left|Center|Right', 'Front|Center|Back', 'Top|Center|Bottom']
     result = UI.inputbox(prompts, defaults, list, 'Set Origin')
     return if result == false
@@ -57,21 +76,9 @@ module TT::Plugins::AxesTools
     @settings[:y] = y
     @settings[:z] = z
 
-    bb_const = "TT::BB_#{x.upcase}_#{y.upcase}_#{z.upcase}"
-    i = eval(bb_const)
-
-    if model.selection.empty?
-      definitions = model.definitions.reject { |d| d.image? }
-    else
-      definitions = []
-      for e in model.selection
-        definitions << TT::Instance.definition(e) if TT::Instance.is?(e)
-      end
-      definitions.uniq!
-    end
-
-    TT::Model.start_operation('Set Insertion Point')
-    for d in definitions
+    i = TT.const_get("BB_#{x.upcase}_#{y.upcase}_#{z.upcase}")
+    TT::Model.start_operation('Set Component Origin')
+    definitions.each { |d|
       begin
         pt = TT::Bounds.point(d.bounds, i)
         TT::Definition.set_origin(d, pt)
@@ -79,21 +86,12 @@ module TT::Plugins::AxesTools
         puts error.message
         puts error.backtrace.join("\n")
       end
-    end
+    }
     model.commit_operation
   end
 
 
   ### DEBUG ### ----------------------------------------------------------------
-
-  def self.axes
-    t = Sketchup.active_model.selection[0].transformation
-    puts "### AXES ###"
-    puts "X: #{t.xaxis.inspect} - #{(t.xaxis == X_AXIS).inspect} - #{(t.xaxis.samedirection?(X_AXIS)).inspect}"
-    puts "Y: #{t.yaxis.inspect} - #{(t.yaxis == Y_AXIS).inspect} - #{(t.yaxis.samedirection?(Y_AXIS)).inspect}"
-    puts "Z: #{t.zaxis.inspect} - #{(t.zaxis == Z_AXIS).inspect} - #{(t.zaxis.samedirection?(Z_AXIS)).inspect}"
-  end
-
 
   # @note Debug method to reload the plugin.
   #
@@ -103,7 +101,6 @@ module TT::Plugins::AxesTools
   # @param [Boolean] tt_lib Reloads TT_Lib2 if +true+.
   #
   # @return [Integer] Number of files reloaded.
-  # @since 1.0.0
   def self.reload(tt_lib = false)
     original_verbose = $VERBOSE
     $VERBOSE = nil
@@ -125,4 +122,4 @@ end # module
 
 end # if TT_Lib
 
-file_loaded __FILE__)
+file_loaded(__FILE__)
