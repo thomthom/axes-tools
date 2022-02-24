@@ -15,7 +15,7 @@ module TT
   # Plugin information
   PLUGIN_ID       = 'TT_Axes_Tools'.freeze
   PLUGIN_NAME     = 'Axes Tools'.freeze
-  PLUGIN_VERSION  = '1.3.2'.freeze
+  PLUGIN_VERSION  = '1.4.0'.freeze
 
   # Resource paths
   FILENAMESPACE = File.basename(__FILE__, '.rb')
