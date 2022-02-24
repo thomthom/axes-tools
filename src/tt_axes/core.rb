@@ -26,18 +26,18 @@ rescue LoadError => e
 end
 
 
-if defined?(TT::Lib) && TT::Lib.compatible?('2.7.0', 'Axes Tools')
+if defined?(TT::Lib) && TT::Lib.compatible?('2.7.0', TT::Plugins::AxesTools::PLUGIN_NAME)
 
 module TT::Plugins::AxesTools
 
-  @settings = TT::Settings.new('TT_Axes_Tools')
+  @settings = TT::Settings.new(PLUGIN_ID)
   @settings.set_default(:x, 'Center')
   @settings.set_default(:y, 'Center')
   @settings.set_default(:z, 'Center')
 
 
   unless file_loaded?(__FILE__)
-    m = TT.menu('Plugins').add_submenu('Axes Tools')
+    m = TT.menu('Plugins').add_submenu(PLUGIN_NAME)
     m.add_item('Set Origin')   { self.set_origin }
   end
 

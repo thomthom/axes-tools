@@ -24,11 +24,11 @@ module TT
 
 
   unless file_loaded?(__FILE__)
-    loader = File.join(PATH, 'core.rb')
+    loader = File.join(PATH, 'core')
     ex = SketchupExtension.new(PLUGIN_NAME, loader)
     ex.description = 'Bulk adjustments of axes.'
     ex.version     = PLUGIN_VERSION
-    ex.copyright   = 'Thomas Thomassen © 2010-2013'
+    ex.copyright   = 'Thomas Thomassen © 2010-2022'
     ex.creator     = 'Thomas Thomassen (thomas@thomthom.net)'
     Sketchup.register_extension(ex, true)
   end
